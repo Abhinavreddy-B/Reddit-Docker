@@ -1,203 +1,104 @@
-# Structure
+# DASS Assignment 1
 
-```
-.
-├── backend
-│   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── package.json
-│   └── ....
-├── docker-compose.yml
-├── frontend
-│   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── package.json
-│   └── ....
-├── nginx
-    └── local.conf
-```
+## Name: *Abhinav Reddy Boddu*
 
-# frontend/Dockerfile:
+## Roll No: *2021101034*
 
-```
-FROM node:16-alpine
+# Submissions:
 
-# ? install node
-RUN apk add python3 make g++ 
+## Bonus:
 
-# ? creat new user (optional)
-USER node 
+| Name                         | Status |
+| ---------------------------- | :----: |
+| Google/Facebook OAuth        |   ❌   |
+| CAS Login                    |   ❌   |
+| Images for Subgreddit        |   ✅   |
+| Stats Graphs                 |   ✅   |
+| Email to Reporter            |   ✅   |
+| Email to Reported User       |   ✅   |
+| Fuzzy Search                 |   ✅   |
+| Multi Sort                   |   ❌   |
+| Chat                         |   ✅   |
+| Confirming to go back        |   ❌   |
+| Infinite Loading             |   ✅   |
+| Multi-level Comments/Replies |   ✅   |
+| Keyboard Shortcuts           |   ✅   |
 
-RUN mkdir -p /home/node/app
-WORKDIR /home/node/app
+## Routes
 
-# ? copy package.json and package-lock.json
-COPY --chown=node:node package*.json ./
+* `/profile` - Profile Page
+* `/mysubgreddits` - My SubGreddits Page
+* `/manage/:id` - Single SubGreddit Page (From My SubGreddits Page)
+* `/subgreddits` - All SubGreddits Page
+* `/subgreddit/:id` - Single SubGreddit Page (From All SubGreddits Page)
+* `/saved` - Saved Page
 
-# ? ci is exact install ( without upgraded version )
-RUN npm i
+## Assumptions:
 
-# ? first . my PC
-# ? second . docker working dir
-COPY --chown=node:node . ./
+### Login/Registration:
 
-# ? give access to 5000 port of docker
-EXPOSE 3000
+* **Not** **verifying** Email with **OTP**/similar stuff , (Email Bonus will only be succesfull if valid email is given)
+* Login with **Username** and **Password**
+* **No** specific **Homepage ,** **Redirect to Profile** page
 
-# RUN chmod +x /bin/sh
-# RUN ls -a /bin/
-RUN npm run build
-CMD npx serve -s build -l 3000
-```
+### Dashboard:
 
-# frontend/.dockerignore:
+#### Navbar
 
-```
-node_modules
-build
-```
+NA
 
-# backend/Dockerfile:
+#### Profile Page
 
-```
-FROM node:16-alpine
+##### Edit
 
-# ? install node
-RUN apk add python3 make g++ 
+* **Cannot** edit **Username**
 
-# ? creat new user (optional)
-USER node 
+##### Followers/Following
 
-RUN mkdir -p /home/node/app
-WORKDIR /home/node/app
+NA
 
-# ? copy package.json and package-lock.json
-COPY --chown=node:node package*.json ./
+#### My Sub Greddiits Page
 
-# ? ci is exact install ( without upgraded version )
-RUN npm i
+##### Create New
 
-# ? first . my PC
-# ? second . docker working dir
-COPY --chown=node:node . ./
+* Image Upload Done ✅ [**BONUS**]
 
-# ? give access to 5000 port of docker
-EXPOSE 5000
+##### List of Owned subgreddits
 
-# RUN chmod +x /bin/sh
-# RUN ls -a /bin/
-CMD npm start
-```
+* No of people Includes Blocked Users
 
-# backend/.dcokerignore:
+#### SubGreddit Page (From My SubGreddits)
 
-same as frontend
+##### Users (Shortcut Key U)
 
-# nginx/local.conf:
+* First Blocked users, then Unblocked Users (**distinguised by chips beside them**)
 
-```
-worker_processes  1;
+##### Join Requests (Shortcut Key J)
 
+NA
 
-events {
-    worker_connections  1024;
-}
+##### Stats (Shortcut Key S)
 
-http {
+* Stats are shown daywise , from the creation date of subgreddits
+* Note this cannot be changed to hourwise, .. etc (Since current implementation does not support) (Not mentioned in PDF)
+* Charts [**BONUS**] ✅
 
-    upstream backend_server {
-        server backend:5000;
-    }
-  
-    upstream frontend_server {
-        server frontend:3000;
-    }
-  
-    server {
-        listen 8080;
-        server_name localhost;
-        client_max_body_size 8M;
-  
-        location /api/ {
-            proxy_pass http://backend_server;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-  
-        location / {
-            proxy_pass http://frontend_server;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-  
-        location /socket.io/ {
-            proxy_pass http://backend_server;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-    }
-}
-```
+##### Reports (Shortcut Key R)
 
-# docker-compose.yml:
+* Block actually Blocks but Mod can still Delete the post (Even after blocking User)
+* Email [**BONUS**] ✅
 
-```yaml
-version: '3.1'
+#### All SubGreddits Page
 
-services:
-    backend:
-      build: ./backend
-      environment:
-        - PORT=5000
-      restart: unless-stopped
-      networks:
-        - web-network
+* All Subgreddits **joined** by the User **appear first. Later Others appear.** **Sorting works internally in each seperately. Like Joined are sorted internally, and not joined are sorted internally**
+* **All available tags are shown as chips**, Where one can Pick multiple Chips
 
+#### Single SubGreddit Page (From All SubGreddit Page)
 
-    frontend:
-      build: ./frontend
-      environment:
-        - PORT=3000
-      networks:
-        - web-network
-    nginx:
-      image: nginx
-      container_name: webserver
-      restart: unless-stopped
-      depends_on:
-        - backend
-        - frontend
-      ports:
-        - 8080:8080
-      volumes:
-        - ./nginx/local.conf:/etc/nginx/nginx.conf
-      networks:
-        - web-network
+* If no image is available , Reddit Logo appears.
+* Multi Level Commenting [**BONUS**]
+* User can Follow Even a Blocked User (Design Choise I made) (Can be changed with 1/2 lines change in Backend)
 
-networks:
-  web-network:
-    driver: bridge
-```
+### Banned Keywords
 
-# How to run:
-
-to build (have to do whenever you update your files) :
-
-```bash
-sudo docker-compose build
-```
-
-to start:
-
-```bash
-sudo docker-compose up
-```
-
-to stop:
-
-```bash
-sudo docker-compose down
-```
+NA
